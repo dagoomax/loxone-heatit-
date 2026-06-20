@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Heatit WiFi Panel - Loxone Virtual HTTP Output (Commands)
+  ==========================================================
+  Sends commands to the Panel's local REST API.
+
+    Parameters : POST http://&lt;PANEL_IP&gt;/api/parameters?&lt;key&gt;=&lt;value&gt;
+    Resets     : DELETE http://&lt;PANEL_IP&gt;/api/reset/&lt;target&gt;?&lt;flag&gt;=Reset
+
+  Import:  Loxone Config -> Periphery -> Virtual Outputs -> Import template,
+           then set Address to the Panel IP (http://192.168.1.100).
+
+  Notes
+  =====
+  * &lt;v&gt; is replaced by the connected analog value at runtime.
+  * &lt;v.1&gt; forces ONE decimal place (e.g. 21.0) - required by the API for
+    setpoint/calibration fields whose pattern is one decimal digit.
+  * Boolean params send literal true/false via CmdOn / CmdOff.
+  * HTTP method per command is set with HttpMethod ("POST" / "DELETE").
+  * Reset commands fire on a rising edge (CmdOn only) - wire them to a
+    momentary pulse, NOT a latching switch, to avoid repeat factory resets.
+  * The API rejects an empty body, so every command carries exactly one key.
+-->
+<VirtualOut Title="Heatit Panel Commands" Comment="Heatit WiFi Panel - local REST command set" Address="http://192.168.1.100" CloseAfterSend="true" CmdInit="">
+
+  <!-- ============ MODE & SETPOINTS ============ -->
+
+  <VirtualOutCmd Title="Set Panel Mode" Comment="Analog 0=Off 1=Heating 2=Eco"
+    CmdOnHTTP="/api/parameters?panelMode=&lt;v&gt;" HttpMethod="POST"
+    Analog="true" MinVal="0" MaxVal="2"/>
+
+  <VirtualOutCmd Title="Set Heating Setpoint" Comment="Analog 5.0..40.0 degC"
+    CmdOnHTTP="/api/parameters?heatingSetpoint=&lt;v.1&gt;" HttpMethod="POST"
+    Analog="true" MinVal="5" MaxVal="40"/>
+
+  <VirtualOutCmd Title="Set Eco Setpoint" Comment="Analog 5.0..40.0 degC"
+    CmdOnHTTP="/api/parameters?ecoSetpoint=&lt;v.1&gt;" HttpMethod="POST"
+    Analog="true" MinVal="5" MaxVal="40"/>
+
+  <VirtualOutCmd Title="Set Min Temp Limit" Comment="Analog 5.0..40.0 degC"
+    CmdOnHTTP="/api/parameters?minimumTemperatureLimit=&lt;v.1&gt;" HttpMethod="POST"
+    Analog="true" MinVal="5" MaxVal="40"/>
+
+  <VirtualOutCmd Title="Set Max Temp Limit" Comment="Analog 5.0..40.0 degC"
+    CmdOnHTTP="/api/parameters?maximumTemperatureLimit=&lt;v.1&gt;" HttpMethod="POST"
+    Analog="true" MinVal="5" MaxVal="40"/>
+
+  <VirtualOutCmd Title="Set Sensor Calibration" Comment="Analog -6.0..6.0 degC"
+    CmdOnHTTP="/api/parameters?sensorCalibration=&lt;v.1&gt;" HttpMethod="POST"
+    Analog="true" MinVal="-6" MaxVal="6"/>
+
+  <!-- ============ DISPLAY & LOAD ============ -->
+
+  <VirtualOutCmd Title="Set Active Brightness" Comment="Analog 1..10"
+    CmdOnHTTP="/api/parameters?activeDisplayBrightness=&lt;v&gt;" HttpMethod="POST"
+    Analog="true" MinVal="1" MaxVal="10"/>
+
+  <VirtualOutCmd Title="Set Standby Brightness" Comment="Analog 0..10"
+    CmdOnHTTP="/api/parameters?standbyDisplayBrightness=&lt;v&gt;" HttpMethod="POST"
+    Analog="true" MinVal="0" MaxVal="10"/>
+
+  <VirtualOutCmd Title="Set Load Limit" Comment="Analog 1..15 (x100 W)"
+    CmdOnHTTP="/api/parameters?loadLimit=&lt;v&gt;" HttpMethod="POST"
+    Analog="true" MinVal="1" MaxVal="15"/>
+
+  <VirtualOutCmd Title="Set Disable Buttons" Comment="Analog 0=on 1=off 2=lock"
+    CmdOnHTTP="/api/parameters?disableButtons=&lt;v&gt;" HttpMethod="POST"
+    Analog="true" MinVal="0" MaxVal="2"/>
+
+  <VirtualOutCmd Title="Set Low Temp Protection" Comment="Analog 0=off, 1..10 degC"
+    CmdOnHTTP="/api/parameters?lowTemperatureProtection=&lt;v&gt;" HttpMethod="POST"
+    Analog="true" MinVal="0" MaxVal="10"/>
+
+  <!-- ============ BOOLEAN TOGGLES (digital) ============ -->
+
+  <VirtualOutCmd Title="Temperature Display" Comment="On=show measured, Off=show setpoint"
+    CmdOnHTTP="/api/parameters?temperatureDisplay=true"
+    CmdOffHTTP="/api/parameters?temperatureDisplay=false"
+    HttpMethod="POST" Analog="false"/>
+
+  <VirtualOutCmd Title="Sensor Mode External" Comment="On=external wireless, Off=internal"
+    CmdOnHTTP="/api/parameters?sensorMode=true"
+    CmdOffHTTP="/api/parameters?sensorMode=false"
+    HttpMethod="POST" Analog="false"/>
+
+  <VirtualOutCmd Title="External Sensor Fallback" Comment="On=fallback to internal, Off=off"
+    CmdOnHTTP="/api/parameters?externalSensorFallback=true"
+    CmdOffHTTP="/api/parameters?externalSensorFallback=false"
+    HttpMethod="POST" Analog="false"/>
+
+  <VirtualOutCmd Title="Open Window Detection" Comment="On=enable OWD, Off=disable"
+    CmdOnHTTP="/api/parameters?openWindowDetection=true"
+    CmdOffHTTP="/api/parameters?openWindowDetection=false"
+    HttpMethod="POST" Analog="false"/>
+
+  <!-- ============ RESETS (DELETE, pulse only!) ============ -->
+  <!--
+    Wire each of these to a MOMENTARY input (pulse). They fire on CmdOn.
+    A latching/steady signal would re-issue the reset on every program
+    cycle. There is deliberately no CmdOff.
+  -->
+
+  <VirtualOutCmd Title="Reset kWh Counter" Comment="PULSE - zeroes totalConsumption"
+    CmdOnHTTP="/api/reset/kwh?resetKwh=Reset" HttpMethod="DELETE" Analog="false"/>
+
+  <VirtualOutCmd Title="Reset Settings" Comment="PULSE - settings to factory (keeps network/app)"
+    CmdOnHTTP="/api/reset/settings?resetSettings=Reset" HttpMethod="DELETE" Analog="false"/>
+
+  <VirtualOutCmd Title="Reset Factory" Comment="PULSE - DANGER: full factory reset, removes from app"
+    CmdOnHTTP="/api/reset/factory?reset=Reset" HttpMethod="DELETE" Analog="false"/>
+
+</VirtualOut>
