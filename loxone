@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Heatit WiFi Panel - Loxone Virtual HTTP Input (Status Poller)
+  =============================================================
+  Polls GET http://&lt;PANEL_IP&gt;/api/status every 60 s and parses the
+  JSON response into Loxone inputs using command recognition.
+
+  Import:  Loxone Config -> Periphery tree -> right-click Miniserver
+           -> "Add Virtual HTTP Input" is created from this template
+           via Insert -> Virtual Input -> Import template.
+
+  After import set:
+    - Address: http://192.168.1.100   (replace with the Panel IP)
+    - Polling interval is preset to 60 s (adjust per VI as needed)
+
+  JSON command-recognition syntax used below:
+    \i"key":\i\v    -> jump past "key": then read the value
+  Booleans (true/false) are mapped to 1/0 via the check-string
+  fields (left = recognised as 1, right = 0).
+-->
+<VirtualInHttp Title="Heatit Panel Status" Comment="Heatit WiFi Panel - local REST status poller" Address="http://192.168.1.100" PollingTime="60" Cmd="/api/status">
+
+  <!-- ============ LIVE READINGS ============ -->
+
+  <VirtualInHttpCmd Title="Room Temperature" Comment="Current measured temperature (degC)"
+    Check="\i&quot;roomTemperature&quot;:\i\v" Signed="true" Analog="true"
+    SourceValLow="0" DestValLow="0" SourceValHigh="100" DestValHigh="100"
+    DefVal="0" MinVal="-50" MaxVal="100"/>
+
+  <VirtualInHttpCmd Title="Current Power" Comment="Instantaneous power draw (W)"
+    Check="\i&quot;currentPower&quot;:\i\v" Signed="false" Analog="true"
+    SourceValLow="0" DestValLow="0" SourceValHigh="1500" DestValHigh="1500"
+    DefVal="0" MinVal="0" MaxVal="1500"/>
+
+  <VirtualInHttpCmd Title="Total Consumption" Comment="Lifetime energy (kWh)"
+    Check="\i&quot;totalConsumption&quot;:\i\v" Signed="false" Analog="true"
+    SourceValLow="0" DestValLow="0" SourceValHigh="100000" DestValHigh="100000"
+    DefVal="0" MinVal="0" MaxVal="100000"/>
+
+  <!-- Heating element state: "Heating" -> 1, "Idle" -> 0 -->
+  <VirtualInHttpCmd Title="Heating Active" Comment="1 = element heating, 0 = idle"
+    Check="\i&quot;state&quot;:&quot;Heating&quot;" CheckHex="false" Analog="false"
+    SourceValLow="0" DestValLow="1" SourceValHigh="1" DestValHigh="0"
+    OnlyCheck="false" DefVal="0" MinVal="0" MaxVal="1"/>
+
+  <!-- ============ ACTIVE PARAMETERS ============ -->
+
+  <VirtualInHttpCmd Title="Panel Mode" Comment="0=Off 1=Heating 2=Eco"
+    Check="\i&quot;panelMode&quot;:\i\v" Signed="false" Analog="true"
+    SourceValLow="0" DestValLow="0" SourceValHigh="2" DestValHigh="2"
+    DefVal="1" MinVal="0" MaxVal="2"/>
+
+  <VirtualInHttpCmd Title="Sensor Calibration" Comment="Offset applied to sensor (degC)"
+    Check="\i&quot;sensorCalibration&quot;:\i\v" Signed="true" Analog="true"
+    SourceValLow="-6" DestValLow="-6" SourceValHigh="6" DestValHigh="6"
+    DefVal="0" MinVal="-6" MaxVal="6"/>
+
+  <VirtualInHttpCmd Title="Heating Setpoint" Comment="Desired heating temp (degC)"
+    Check="\i&quot;heatingSetpoint&quot;:\i\v" Signed="false" Analog="true"
+    SourceValLow="5" DestValLow="5" SourceValHigh="40" DestValHigh="40"
+    DefVal="21" MinVal="5" MaxVal="40"/>
+
+  <VirtualInHttpCmd Title="Eco Setpoint" Comment="Desired ECO temp (degC)"
+    Check="\i&quot;ecoSetpoint&quot;:\i\v" Signed="false" Analog="true"
+    SourceValLow="5" DestValLow="5" SourceValHigh="40" DestValHigh="40"
+    DefVal="18" MinVal="5" MaxVal="40"/>
+
+  <VirtualInHttpCmd Title="Min Temperature Limit" Comment="Lowest allowed setpoint (degC)"
+    Check="\i&quot;minimumTemperatureLimit&quot;:\i\v" Signed="false" Analog="true"
+    SourceValLow="5" DestValLow="5" SourceValHigh="40" DestValHigh="40"
+    DefVal="5" MinVal="5" MaxVal="40"/>
+
+  <VirtualInHttpCmd Title="Max Temperature Limit" Comment="Highest allowed setpoint (degC)"
+    Check="\i&quot;maximumTemperatureLimit&quot;:\i\v" Signed="false" Analog="true"
+    SourceValLow="5" DestValLow="5" SourceValHigh="40" DestValHigh="40"
+    DefVal="40" MinVal="5" MaxVal="40"/>
+
+  <VirtualInHttpCmd Title="Active Display Brightness" Comment="1..10 (10%..100%)"
+    Check="\i&quot;activeDisplayBrightness&quot;:\i\v" Signed="false" Analog="true"
+    SourceValLow="1" DestValLow="1" SourceValHigh="10" DestValHigh="10"
+    DefVal="10" MinVal="1" MaxVal="10"/>
+
+  <VirtualInHttpCmd Title="Standby Display Brightness" Comment="0..10 (0%..100%)"
+    Check="\i&quot;standbyDisplayBrightness&quot;:\i\v" Signed="false" Analog="true"
+    SourceValLow="0" DestValLow="0" SourceValHigh="10" DestValHigh="10"
+    DefVal="5" MinVal="0" MaxVal="10"/>
+
+  <VirtualInHttpCmd Title="Load Limit" Comment="1..15 (x100 W)"
+    Check="\i&quot;loadLimit&quot;:\i\v" Signed="false" Analog="true"
+    SourceValLow="1" DestValLow="1" SourceValHigh="15" DestValHigh="15"
+    DefVal="15" MinVal="1" MaxVal="15"/>
+
+  <VirtualInHttpCmd Title="Max Load" Comment="Device hardware max load (read-only)"
+    Check="\i&quot;maxLoad&quot;:\i\v" Signed="false" Analog="true"
+    SourceValLow="4" DestValLow="4" SourceValHigh="15" DestValHigh="15"
+    DefVal="15" MinVal="4" MaxVal="15"/>
+
+  <VirtualInHttpCmd Title="Disable Buttons" Comment="0=enabled 1=disabled 2=lock menu"
+    Check="\i&quot;disableButtons&quot;:\i\v" Signed="false" Analog="true"
+    SourceValLow="0" DestValLow="0" SourceValHigh="2" DestValHigh="2"
+    DefVal="0" MinVal="0" MaxVal="2"/>
+
+  <VirtualInHttpCmd Title="Low Temp Protection" Comment="0=off, 1..10 = activate below degC"
+    Check="\i&quot;lowTemperatureProtection&quot;:\i\v" Signed="false" Analog="true"
+    SourceValLow="0" DestValLow="0" SourceValHigh="10" DestValHigh="10"
+    DefVal="0" MinVal="0" MaxVal="10"/>
+
+  <!-- ============ BOOLEAN FLAGS (true->1 / false->0) ============ -->
+
+  <VirtualInHttpCmd Title="Temperature Display" Comment="1=show measured, 0=show setpoint"
+    Check="\i&quot;temperatureDisplay&quot;:true" CheckHex="false" Analog="false"
+    SourceValLow="0" DestValLow="1" SourceValHigh="1" DestValHigh="0"
+    OnlyCheck="false" DefVal="0" MinVal="0" MaxVal="1"/>
+
+  <VirtualInHttpCmd Title="Sensor Mode External" Comment="1=external wireless, 0=internal"
+    Check="\i&quot;sensorMode&quot;:true" CheckHex="false" Analog="false"
+    SourceValLow="0" DestValLow="1" SourceValHigh="1" DestValHigh="0"
+    OnlyCheck="false" DefVal="0" MinVal="0" MaxVal="1"/>
+
+  <VirtualInHttpCmd Title="External Sensor Fallback" Comment="1=fallback to internal, 0=off"
+    Check="\i&quot;externalSensorFallback&quot;:true" CheckHex="false" Analog="false"
+    SourceValLow="0" DestValLow="1" SourceValHigh="1" DestValHigh="0"
+    OnlyCheck="false" DefVal="1" MinVal="0" MaxVal="1"/>
+
+  <!-- Open Window Detection: nested object {"OWD":{"activeNow":true,...}} -->
+  <VirtualInHttpCmd Title="Open Window Active" Comment="1=open window detected (setpoint lowered)"
+    Check="\i&quot;activeNow&quot;:true" CheckHex="false" Analog="false"
+    SourceValLow="0" DestValLow="1" SourceValHigh="1" DestValHigh="0"
+    OnlyCheck="false" DefVal="0" MinVal="0" MaxVal="1"/>
+
+  <VirtualInHttpCmd Title="Open Window Time Left" Comment="Seconds until OWD ends"
+    Check="\i&quot;activeTime&quot;:\i\v" Signed="false" Analog="true"
+    SourceValLow="0" DestValLow="0" SourceValHigh="86400" DestValHigh="86400"
+    DefVal="0" MinVal="0" MaxVal="86400"/>
+
+  <!-- ============ NETWORK / INFO ============ -->
+
+  <VirtualInHttpCmd Title="WiFi Signal" Comment="RSSI text, parsed numeric (dBm)"
+    Check="\i&quot;wifiSignalStrength&quot;:&quot;\i\v" Signed="true" Analog="true"
+    SourceValLow="-100" DestValLow="-100" SourceValHigh="0" DestValHigh="0"
+    DefVal="-100" MinVal="-120" MaxVal="0"/>
+
+</VirtualInHttp>
